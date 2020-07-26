@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# bin/detect <build-dir>
+set -e
+
+build=$(cd "$1/" && pwd)
+
+if test -f "${build}/*.opam" || # opam
+   test -f "${build}/dune-project" #dune
+then
+  echo OCaml
+  exit 0
+else
+  exit 1
+fi

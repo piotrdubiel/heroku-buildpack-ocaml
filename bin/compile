@@ -1,0 +1,36 @@
+#!/bin/bash
+# usage: bin/compile <build-dir> <cache-dir> <env-dir>
+
+set -eo pipefail
+
+# Find all the directories we might need (based on
+# heroku-buildpack-nodejs code).
+BUILD_DIR=${1:-}
+CACHE_DIR=${2:-}
+ENV_DIR=${3:-}
+BP_DIR=$(cd $(dirname ${0:-}); cd ..; pwd)
+
+VERSION=4.09.1
+
+# Switch to our cache directory.
+mkdir -p "$CACHE_DIR"
+cd "$CACHE_DIR"
+
+export OPAM_HOME="$HOME/.opam"
+
+if [ -d "$OPAM_HOME" ]; then
+    echo "-----> Creating opam switch OCaml $VERSION"
+    # It's possible that $VERSION has changed
+    opam update
+    opam switch create "$VERSION"
+else
+    echo "-----> Downloading opam"
+    sh <(curl -sL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)
+    opam init
+    echo "-----> Using opam to install Rust channel $VERSION"
+    opam switch create "$VERSION"
+fi
+
+echo "-----> Building application using Dune"
+cd "$BUILD_DIR"
+dune build --release
